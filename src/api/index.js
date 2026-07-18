@@ -21,10 +21,21 @@ api.interceptors.response.use(
   error => {
     const authStore = useAuthStore()
     if (error.response?.status === 401) {
-      // Chỉ logout nếu KHÔNG phải endpoint profile (GET/PUT /users/me)
-      if (!error.config.url.includes('/users/me')) {
+      // Không văng thông báo nếu người dùng đang cố đăng nhập và nhập sai mật khẩu
+      if (!error.config.url.includes('/login') && !error.config.url.includes('/register')) {
         authStore.logout()
-        router.push('/login?session_expired=true')
+        
+        import('sweetalert2').then(({ default: Swal }) => {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Phiên đăng nhập hết hạn',
+            text: 'Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.',
+            confirmButtonText: 'Đăng nhập',
+            allowOutsideClick: false
+          }).then(() => {
+            router.push('/login')
+          })
+        })
       }
     }
     return Promise.reject(error)
