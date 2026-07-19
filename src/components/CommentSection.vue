@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import ProtectedFile from './ProtectedFile.vue';
+import Swal from 'sweetalert2';
 
 // ==========================================
 // THÔNG TIN CHUNG & LOCAL STORAGE
@@ -121,15 +122,13 @@ const handleSendComment = async () => {
   if (!newCommentContent.value.trim() && attachedFiles.value.length === 0) return;
 
   if (!currentUserId.value) {
-    alert("Lỗi: Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
+    Swal.fire('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.', 'error');
     return;
   }
 
   try {
     isLoading.value = true;
     const filesToUpload = attachedFiles.value.map(f => f.raw);
-    
-    console.log("Đang gửi bình luận:", { taskId: props.taskId, content: newCommentContent.value, userId: currentUserId.value, files: filesToUpload });
 
     // Gọi API kèm ID thật của user từ Local Storage
     await commentApi.addComment(props.taskId, newCommentContent.value, filesToUpload, currentUserId.value, replyingToId.value);
@@ -137,22 +136,19 @@ const handleSendComment = async () => {
     newCommentContent.value = '';
     attachedFiles.value = [];
 
-    //reset trạng thái trả lời 
+    // Reset trạng thái trả lời
     cancelReply();
-    //xóa nội dung hiển thị
- if (quillRef.value) {
- quillRef.value.setHTML('<p><br></p>'); 
- }
-
-
-    
+    // Xóa nội dung hiển thị
+    if (quillRef.value) {
+      quillRef.value.setHTML('<p><br></p>');
+    }
     await fetchComments();
-} catch (error) {
-  console.log("FULL ERROR:", error.response);
-  alert(JSON.stringify(error.response?.data));
-} finally {
-  isLoading.value = false;
-}
+  } catch (error) {
+    const msg = error.response?.data?.message || error.response?.data || error.message || 'Gửi bình luận thất bại.';
+    Swal.fire('Lỗi', String(msg), 'error');
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 
@@ -273,24 +269,34 @@ const saveEdit = async (commentId) => {
   try {
     isUpdating.value = true;
     await commentApi.updateComment(commentId, editContent.value, currentUserId.value);
-    await fetchComments(); 
+    await fetchComments();
     cancelEdit();
+    Swal.fire({ title: 'Đã lưu', icon: 'success', timer: 1200, showConfirmButton: false });
   } catch (error) {
-    alert("Có lỗi xảy ra khi cập nhật bình luận.");
-    console.error(error);
+    Swal.fire('Lỗi', 'Có lỗi xảy ra khi cập nhật bình luận.', 'error');
   } finally {
     isUpdating.value = false;
   }
 };
 
 const deleteComment = async (commentId) => {
-  if (confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
+  const result = await Swal.fire({
+    title: 'Xác nhận xóa',
+    text: 'Bạn có chắc chắn muốn xóa bình luận này không?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#9e9e9e',
+    confirmButtonText: 'Xóa',
+    cancelButtonText: 'Hủy'
+  });
+  if (result.isConfirmed) {
     try {
       await commentApi.deleteComment(commentId, currentUserId.value);
-      await fetchComments(); 
+      await fetchComments();
+      Swal.fire({ title: 'Đã xóa', icon: 'success', timer: 1200, showConfirmButton: false });
     } catch (error) {
-      alert("Có lỗi xảy ra khi xóa bình luận.");
-      console.error(error);
+      Swal.fire('Lỗi', 'Có lỗi xảy ra khi xóa bình luận.', 'error');
     }
   }
 };

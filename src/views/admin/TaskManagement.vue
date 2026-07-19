@@ -5,6 +5,7 @@
             :items="displayTasks"
             :loading="loading"
             class="elevation-1"
+            mobile-breakpoint="md"
             :no-data-text="activeTab === 'assigned' ? 'Bạn chưa được giao công việc nào' : 'Không có công việc nào'"
         >
             <template v-slot:top>
@@ -18,6 +19,15 @@
                     </v-tabs>
 
                     <v-spacer></v-spacer>
+                    <!-- Nút chuyển đổi chế độ xem Table/Kanban -->
+                    <v-btn-toggle v-model="viewMode" mandatory density="compact" variant="outlined" color="primary" class="mr-3">
+                        <v-btn value="table" size="small" title="Chế độ bảng">
+                            <v-icon>mdi-view-list</v-icon>
+                        </v-btn>
+                        <v-btn value="kanban" size="small" title="Chế độ Kanban">
+                            <v-icon>mdi-view-week</v-icon>
+                        </v-btn>
+                    </v-btn-toggle>
                     <v-dialog v-model="dialog" max-width="700px">
                         <template v-slot:activator="{ props }" v-if="canManageTasks">
                             <v-btn class="primary-gradient-btn pulse-primary font-weight-bold mb-2 px-4" rounded="pill" prepend-icon="mdi-plus" dark v-bind="props">
@@ -111,9 +121,15 @@
                 </v-toolbar>
             </template>
             
-            <!-- Custom hiển thị Tiêu đề (Click để xem chi tiết) -->
             <template v-slot:item.title="{ item }">
-                {{ item.title }}
+                <v-tooltip location="top" max-width="400">
+                    <template v-slot:activator="{ props }">
+                        <span v-bind="props" class="d-inline-block text-truncate" style="max-width: 200px;">
+                            {{ item.title }}
+                        </span>
+                    </template>
+                    <span>{{ item.title }}</span>
+                </v-tooltip>
             </template>
 
             <!-- Custom hiển thị Tên Dự án -->
@@ -164,6 +180,21 @@
                 </template>
             </template>
         </v-data-table>
+
+        <!-- ===== KANBAN BOARD VIEW ===== -->
+        <TaskKanbanBoard
+            v-if="viewMode === 'kanban'"
+            :kanban-columns="kanbanColumns"
+            :tasks="displayTasks"
+            :get-project-name="getProjectName"
+            :get-priority-color="getPriorityColor"
+            :get-task-priority-v-n="getTaskPriorityVN"
+            :is-overdue="isOverdue"
+            :can-manage-task-item="canManageTaskItem"
+            :current-user-id="authStore.user?.id"
+            @drop-task="handleDropTask"
+            @go-detail="goDetail"
+        />
     </v-container>
 </template>
 
@@ -176,6 +207,7 @@ import { useUserStore } from '@/stores/user'
 import { projectApi } from '@/api/projectApi'
 import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
+import TaskKanbanBoard from '@/components/TaskKanbanBoard.vue'
 
 const taskStore = useTaskStore()
 // SỬA: Dùng allSystemTasks để hiển thị tất cả công việc trong hệ thống
@@ -223,6 +255,32 @@ const headers = [
 ]
 
 const activeTab = ref('all')
+const viewMode = ref('table')
+
+// ===== KANBAN BOARD =====
+const kanbanColumns = [
+    { status: 'TO_DO',      label: 'Cần làm',    color: 'default' },
+    { status: 'IN_PROGRESS', label: 'Đang làm',  color: 'info' },
+    { status: 'DONE',       label: 'Hoàn thành',  color: 'success' },
+    { status: 'CANCELLED',  label: 'Đã hủy',     color: 'error' },
+]
+
+const handleDropTask = async ({ task, newStatus }) => {
+    if (task.status === newStatus) return
+    try {
+        await taskStore.updateStatus(task.id, newStatus, '')
+        Swal.fire({ title: 'Thành công', text: `Đã chuyển sang "${kanbanColumns.find(c => c.status === newStatus)?.label}"`, icon: 'success', timer: 1500, showConfirmButton: false })
+    } catch (err) {
+        const msg = err.response?.status === 403
+            ? 'Bạn không có quyền thay đổi trạng thái công việc này'
+            : (err.response?.data?.message || err.message)
+        Swal.fire('Lỗi', msg, 'error')
+    }
+}
+
+const isOverdue = (task) => task.deadline && new Date(task.deadline) < new Date() && task.status !== 'DONE'
+
+// ========================
 
 const editedIndex = ref(-1)
 const defaultItem = { id: '', title: '', description: '', projectId: '', assigneeId: '', priority: 'MEDIUM', status: 'TO_DO', deadline: null }
@@ -529,4 +587,6 @@ onMounted(async () => {
 .pulse-manage {
   animation: pulse-manage 2s infinite;
 }
+
+
 </style>

@@ -26,7 +26,7 @@
 
         <!-- Bảng dữ liệu (đã xóa cột Tên đăng nhập) -->
         <v-card elevation="2" class="rounded-lg overflow-hidden">
-            <v-data-table :headers="headers" :items="filteredUsers" :loading="loading"
+            <v-data-table :headers="headers" :items="filteredUsers" :loading="loading" mobile-breakpoint="md"
                 loading-text="Đang tải danh sách người dùng..." no-data-text="Không tìm thấy người dùng nào"
                 :items-per-page="10"
                 :footer-props="{ itemsPerPageOptions: [5, 10, 20, 50, -1], itemsPerPageText: 'Hiển thị:' }"

@@ -38,9 +38,17 @@
                 {{ project?.visibility === 'public' ? 'Công khai' : 'Riêng tư' }}
               </v-chip>
             </div>
-            <p class="text-body-1 text-grey-darken-1" style="max-width: 800px;">
-              {{ project?.description || 'Nhập mô tả cho dự án mới của bạn.' }}
-            </p>
+            <div style="max-width: 800px;">
+              <p class="text-body-1 text-grey-darken-1 mb-1" style="white-space: pre-wrap; word-break: break-word;">
+                {{ displayDescription }}
+              </p>
+              <a href="#" 
+                 v-if="(project?.description || '').length > maxDescLength" 
+                 @click.prevent="isDescExpanded = !isDescExpanded" 
+                 class="text-primary text-caption font-weight-bold text-decoration-none">
+                {{ isDescExpanded ? 'Ẩn bớt' : 'Xem thêm' }}
+              </a>
+            </div>
           </div>
 
           <!-- Action Buttons -->
@@ -188,13 +196,18 @@
               </div>
 
               <!-- Bảng danh sách công việc -->
-              <v-data-table :headers="taskHeaders" :items="projectTasks" :loading="loading"
+              <v-data-table :headers="taskHeaders" :items="projectTasks" :loading="loading" mobile-breakpoint="md"
                 no-data-text="Chưa có công việc nào trong dự án này.">
                 
                 <template v-slot:item.title="{ item }">
-                  <span class="font-weight-medium">
-                    {{ item.title }}
-                  </span>
+                  <v-tooltip location="top" max-width="400">
+                    <template v-slot:activator="{ props }">
+                      <span v-bind="props" class="font-weight-medium d-inline-block text-truncate" style="max-width: 250px;">
+                        {{ item.title }}
+                      </span>
+                    </template>
+                    <span>{{ item.title }}</span>
+                  </v-tooltip>
                 </template>
 
                 <template v-slot:item.assigneeId="{ item }">
@@ -547,8 +560,18 @@ const editForm = reactive({
 const currentUserId = computed(() => authStore.user?.id);
 const isActualOwner = computed(() => project.value?.ownerId == currentUserId.value);
 const isOwner = computed(() => isActualOwner.value);
-
 const isMember = computed(() => project.value?.memberIds?.some(id => id == currentUserId.value));
+
+// Logic hiển thị mô tả Xem thêm
+const isDescExpanded = ref(false);
+const maxDescLength = 100;
+const displayDescription = computed(() => {
+  const desc = project.value?.description || 'Nhập mô tả cho dự án mới của bạn.';
+  if (isDescExpanded.value || desc.length <= maxDescLength) {
+    return desc;
+  }
+  return desc.substring(0, maxDescLength) + '...';
+});
 const isPending = computed(() => project.value?.pendingMemberIds?.some(id => id == currentUserId.value));
 
 const isAdmin = computed(() => authStore.userRole === 'ADMIN');

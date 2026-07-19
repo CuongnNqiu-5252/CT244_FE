@@ -70,7 +70,7 @@
         <v-card class="pa-4">
           <v-card-title> Bảng chi tiết Task </v-card-title>
 
-          <v-data-table :headers="headers" :items="tableData" />
+          <v-data-table :headers="headers" :items="tableData" mobile-breakpoint="md" />
         </v-card>
       </v-col>
 
@@ -138,7 +138,7 @@
       <v-card>
         <v-card-title>Chi tiết công việc - {{ selectedUser?.name }}</v-card-title>
         <v-card-text>
-          <v-data-table :headers="userTaskHeaders" :items="selectedUserTasks" density="compact" />
+          <v-data-table :headers="userTaskHeaders" :items="selectedUserTasks" density="compact" mobile-breakpoint="md" />
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>

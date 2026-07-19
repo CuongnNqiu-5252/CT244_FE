@@ -16,9 +16,14 @@
           <v-icon icon="mdi-folder-text-outline" :color="getStatusColor(project.status)"></v-icon>
         </v-avatar>
       </template>
-      <v-card-title class="font-weight-bold text-h6 text-truncate">
-        {{ project.name }}
-      </v-card-title>
+      <v-tooltip location="top" max-width="400">
+        <template v-slot:activator="{ props }">
+          <v-card-title v-bind="props" class="font-weight-bold text-h6 text-truncate">
+            {{ project.name }}
+          </v-card-title>
+        </template>
+        <span>{{ project.name }}</span>
+      </v-tooltip>
       <v-card-subtitle class="d-flex align-center mt-1">
         <v-icon
           size="small"
@@ -35,9 +40,14 @@
     </v-card-item>
 
     <v-card-text class="flex-grow-1 pt-2 pb-0">
-      <p class="text-body-2 text-grey-darken-1 mb-4 project-description">
-        {{ project.description || 'Chưa có mô tả cho dự án này.' }}
-      </p>
+      <v-tooltip location="bottom" max-width="400">
+        <template v-slot:activator="{ props }">
+          <p v-bind="props" class="text-body-2 text-grey-darken-1 mb-4 project-description text-truncate">
+            {{ project.description || 'Chưa có mô tả cho dự án này.' }}
+          </p>
+        </template>
+        <span style="white-space: pre-wrap;">{{ project.description || 'Chưa có mô tả cho dự án này.' }}</span>
+      </v-tooltip>
       
       <div class="d-flex align-center">
         <v-chip

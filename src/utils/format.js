@@ -1,4 +1,9 @@
 export const formatDate = (date) => {
+    if (!date) return '---'
+    
+    // Đã fix lỗi "Invalid Date"
+
+
     return new Date(date).toLocaleDateString('vi-VN', {
         day: '2-digit',
         month: '2-digit',

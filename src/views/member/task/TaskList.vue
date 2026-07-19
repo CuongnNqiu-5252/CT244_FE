@@ -1,16 +1,35 @@
 <template>
     <v-container>
-        <h2 class="mb-4">Công việc được giao</h2>
+        <div class="d-flex align-center justify-space-between mb-4">
+            <h2>Công việc được giao</h2>
+            <v-btn-toggle v-model="viewMode" mandatory density="compact" variant="outlined" color="primary">
+                <v-btn value="table" size="small" title="Chế độ bảng">
+                    <v-icon>mdi-view-list</v-icon>
+                </v-btn>
+                <v-btn value="kanban" size="small" title="Chế độ Kanban">
+                    <v-icon>mdi-view-week</v-icon>
+                </v-btn>
+            </v-btn-toggle>
+        </div>
 
         <v-data-table
+            v-if="viewMode === 'table'"
             :headers="headers"
             :items="myTasks"
             :loading="loading"
             class="elevation-1"
+            mobile-breakpoint="md"
             no-data-text="Bạn chưa được giao công việc nào"
         >
             <template v-slot:item.title="{ item }">
-                {{ item.title }}
+                <v-tooltip location="top" max-width="400">
+                    <template v-slot:activator="{ props }">
+                        <span v-bind="props" class="d-inline-block text-truncate" style="max-width: 200px;">
+                            {{ item.title }}
+                        </span>
+                    </template>
+                    <span>{{ item.title }}</span>
+                </v-tooltip>
             </template>
 
             <template v-slot:item.projectId="{ item }">
@@ -50,21 +69,59 @@
                 <v-icon size="small" @click="goDetail(item)">mdi-eye</v-icon>
             </template>
         </v-data-table>
+
+        <TaskKanbanBoard
+            v-if="viewMode === 'kanban'"
+            :kanban-columns="kanbanColumns"
+            :tasks="myTasks"
+            :get-project-name="getProjectName"
+            :get-priority-color="getPriorityColor"
+            :get-task-priority-v-n="getTaskPriorityVN"
+            :is-overdue="isOverdue"
+            :current-user-id="authStore.user?.id"
+            @drop-task="handleDropTask"
+            @go-detail="goDetail"
+        />
     </v-container>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/task'
 import { useProjectStore } from '@/stores/project'
 import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
+import TaskKanbanBoard from '@/components/TaskKanbanBoard.vue'
 
 const router = useRouter()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
+
+const viewMode = ref('table')
+
+// ===== KANBAN BOARD =====
+const kanbanColumns = [
+    { status: 'TO_DO',      label: 'Cần làm',    color: 'default' },
+    { status: 'IN_PROGRESS', label: 'Đang làm',  color: 'info' },
+    { status: 'DONE',       label: 'Hoàn thành',  color: 'success' },
+    { status: 'CANCELLED',  label: 'Đã hủy',     color: 'error' },
+]
+
+const handleDropTask = async ({ task, newStatus }) => {
+    if (task.status === newStatus) return
+    try {
+        await taskStore.updateStatus(task.id, newStatus, '')
+        Swal.fire({ title: 'Thành công', text: `Đã chuyển sang "${kanbanColumns.find(c => c.status === newStatus)?.label}"`, icon: 'success', timer: 1500, showConfirmButton: false })
+    } catch (err) {
+        const msg = err.response?.status === 403
+            ? 'Bạn không có quyền thay đổi trạng thái công việc này'
+            : (err.response?.data?.message || err.message)
+        Swal.fire('Lỗi', msg, 'error')
+    }
+}
+// ========================
 
 const statusOptions = [
   { title: 'Cần làm', value: 'TO_DO' },
@@ -149,6 +206,8 @@ const handleUpdateStatus = async (item, newStatus) => {
     }
 }
 
+const isOverdue = (task) => task.deadline && new Date(task.deadline) < new Date() && task.status !== 'DONE'
+
 onMounted(() => {
     // Lấy tất cả task và project của hệ thống để đảm bảo có đủ dữ liệu
     // để lọc ra task của mình và hiển thị đúng tên dự án.
@@ -174,4 +233,5 @@ onMounted(() => {
 .pulse-primary {
   animation: pulse-primary 2s infinite;
 }
+
 </style>

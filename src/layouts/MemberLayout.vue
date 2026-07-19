@@ -3,22 +3,26 @@
   <v-app class="app-background">
     <!-- Header trên cùng -->
     <v-app-bar app color="primary" dark flat elevation="0" class="glass-header">
+      <v-app-bar-nav-icon class="d-md-none" @click="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title class="font-weight-bold">
         CT240-Quản lý công việc nhóm
       </v-toolbar-title>
       <v-spacer></v-spacer>
+      <v-btn icon @click="toggleTheme" title="Giao diện Sáng/Tối" class="mr-2">
+        <v-icon>{{ isDark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+      </v-btn>
       <v-btn icon @click="logout" title="Đăng xuất">
         <v-icon>mdi-logout</v-icon>
       </v-btn>
     </v-app-bar>
 
     <!-- Sidebar trái cho Member -->
-    <v-navigation-drawer permanent app width="280" class="glass-sidebar" elevation="0" :rail="rail" @mouseenter="rail = false" @mouseleave="rail = true">
+    <v-navigation-drawer v-model="drawer" :permanent="!mobile" app width="280" class="glass-sidebar" elevation="0" :rail="!mobile && rail" @mouseenter="rail = false" @mouseleave="rail = true">
       <v-list nav dense>
         <!-- Tiêu đề -->
         <v-list-item class="px-2 py-4" prepend-icon="mdi-account-circle-outline" title="Thành viên">
           <template v-slot:title>
-            <span class="text-h6 font-weight-bold black--text">Thành viên</span>
+            <span class="text-h6 font-weight-bold">Thành viên</span>
           </template>
         </v-list-item>
 
@@ -49,14 +53,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { useDisplay, useTheme } from 'vuetify'
 
+const { mobile } = useDisplay()
+const theme = useTheme()
 const authStore = useAuthStore()
 const router = useRouter()
 
-const rail = ref(true)
+const rail = ref(false)
+const drawer = ref(true)
+
+const isDark = computed(() => theme.global.name.value === 'dark')
+
+const toggleTheme = () => {
+  theme.global.name.value = isDark.value ? 'light' : 'dark'
+  localStorage.setItem('theme', theme.global.name.value)
+}
 
 const logout = () => {
   authStore.logout()
@@ -66,23 +81,28 @@ const logout = () => {
 
 <style scoped>
 /* Tạo nền gradient nhẹ cho toàn bộ trang (giống Admin) */
-.app-background {
+.v-theme--light .app-background {
     background: linear-gradient(135deg, #eef2f3 0%, #e0eafc 100%) !important;
+    background-attachment: fixed !important;
+}
+.v-theme--dark .app-background {
+    background: linear-gradient(135deg, #121212 0%, #242424 100%) !important;
     background-attachment: fixed !important;
 }
 
 /* --- GLASS SIDEBAR STYLE --- */
-.glass-sidebar {
-    /* Màu trắng đục 75% */
+.v-theme--light .glass-sidebar {
     background: rgba(255, 255, 255, 0.75) !important;
-    /* Hiệu ứng mờ đằng sau */
+    border-right: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+.v-theme--dark .glass-sidebar {
+    background: rgba(33, 33, 33, 0.75) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.glass-sidebar {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
-    /* Viền phải nhẹ */
-    border-right: 1px solid rgba(255, 255, 255, 0.8) !important;
-    /* Đổ bóng nhẹ để tách biệt */
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05) !important;
-    /* Hiệu ứng trượt mượt mà */
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -94,21 +114,25 @@ const logout = () => {
 /* Vùng nội dung trong suốt */
 .v-main {
     background: transparent !important;
-    /* Thêm transition cho padding-left để nội dung bị đẩy vào mượt mà */
     transition: padding-left 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .v-list-item__title {
   font-size: 1rem !important;
-  /* chữ to hơn */
   font-weight: 700 !important;
-  /* đậm rõ ràng */
-  color: #000000 !important;
 }
 
 .v-list-item .v-icon {
-  color: #000000 !important;
   font-size: 24px !important;
+}
+
+.v-theme--light .v-list-item__title,
+.v-theme--light .v-list-item .v-icon {
+    color: #000000 !important;
+}
+.v-theme--dark .v-list-item__title,
+.v-theme--dark .v-list-item .v-icon {
+    color: #ffffff !important;
 }
 
 .menu-item {

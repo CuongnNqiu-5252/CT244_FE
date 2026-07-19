@@ -14,13 +14,18 @@
 
     <v-card class="mt-8" variant="flat" border>
       <!-- Bảng dữ liệu để hiển thị -->
-      <v-data-table :headers="headers" :items="projectStore.allSystemProjects" :loading="projectStore.loading"
+      <v-data-table :headers="headers" :items="projectStore.allSystemProjects" :loading="projectStore.loading" mobile-breakpoint="md"
         loading-text="Đang tải dữ liệu..." no-data-text="Không có dự án nào trong hệ thống."
         items-per-page-text="Số dự án mỗi trang">
         <!-- Tùy chỉnh cột Tên dự án -->
         <template v-slot:item.name="{ item }">
           <div class="d-flex align-center">
-            <span class="font-weight-bold mr-2">{{ item.name }}</span>
+            <v-tooltip location="top" max-width="400">
+              <template v-slot:activator="{ props }">
+                <span v-bind="props" class="font-weight-bold mr-2 d-inline-block text-truncate" style="max-width: 250px;">{{ item.name }}</span>
+              </template>
+              <span>{{ item.name }}</span>
+            </v-tooltip>
             <v-chip
               v-if="isProjectParticipant(item)"
               color="primary"

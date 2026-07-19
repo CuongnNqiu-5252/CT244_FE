@@ -137,9 +137,13 @@ const formatDate = (date) => {
 </script>
 
 <style scoped>
-.unread-item {
+.v-theme--light .unread-item {
   border-left: 4px solid #2979FF;
   background-color: #F5Faff;
+}
+.v-theme--dark .unread-item {
+  border-left: 4px solid #2979FF;
+  background-color: #1a2332;
 }
 .gap-2 {
   display: flex;

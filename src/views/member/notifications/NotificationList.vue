@@ -1,7 +1,7 @@
 <template>
   <v-container class="pa-4">
     <v-card elevation="2" class="rounded-lg">
-      <v-toolbar flat color="white">
+      <v-toolbar flat color="surface">
         <v-toolbar-title class="font-weight-bold">🔔 Thông báo của bạn</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn color="primary" variant="tonal" @click="store.markAllAsRead(userId)">
@@ -101,8 +101,11 @@ const formatDate = (date) => {
 </script>
 
 <style scoped>
-.unread-bg {
+.v-theme--light .unread-bg {
   background-color: #f0f7ff !important;
+}
+.v-theme--dark .unread-bg {
+  background-color: #1a2332 !important;
 }
 .unread-dot {
   width: 10px;
