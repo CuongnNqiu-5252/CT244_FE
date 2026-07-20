@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: ct240_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build: 
+      context: ./backend
+    container_name: ct240_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_MONGODB_URI=mongodb://mongodb:27017/ct240_task_db
+      - JWT_SECRET=super-secret-production-key-at-least-256-bits-long
+      - JWT_EXPIRATION=86400000
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  frontend:
+    build: 
+      context: .
+      args:
+        VITE_API_URL: http://localhost:8080/api
+    container_name: ct240_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
